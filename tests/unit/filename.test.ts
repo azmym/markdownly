@@ -27,9 +27,20 @@ describe('buildFilename', () => {
     expect(buildFilename('CON')).toBe('page-con-2026-04-20.md');
   });
 
-  it('uses sv-SE locale so the date is ISO-formatted', () => {
+  it('zero-pads single-digit months and days', () => {
     // Jan 5 — confirm zero-padding
     vi.setSystemTime(new Date(2026, 0, 5, 9, 0, 0));
     expect(buildFilename('hello')).toBe('hello-2026-01-05.md');
+  });
+
+  it('uses local date, not UTC, across midnight boundary', () => {
+    // 2026-04-20 23:30 local. In UTC this is either still the 20th or the 21st
+    // depending on offset, but local-date MUST say the 20th.
+    vi.setSystemTime(new Date(2026, 3, 20, 23, 30, 0));
+    expect(buildFilename('x')).toBe('x-2026-04-20.md');
+  });
+
+  it('composes untitled for CJK-only titles', () => {
+    expect(buildFilename('日本語')).toBe('untitled-2026-04-20.md');
   });
 });
