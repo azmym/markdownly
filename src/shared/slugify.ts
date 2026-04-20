@@ -5,6 +5,7 @@ const WINDOWS_RESERVED = new Set([
 ]);
 
 const MAX_LEN = 80;
+const MIN_REWIND = 20;
 
 export function slugify(input: string): string {
   let s = input.normalize('NFKD');
@@ -22,7 +23,7 @@ export function slugify(input: string): string {
   if (s.length > MAX_LEN) {
     const cut = s.slice(0, MAX_LEN);
     const lastDash = cut.lastIndexOf('-');
-    s = lastDash > 0 ? cut.slice(0, lastDash) : cut;
+    s = lastDash >= MIN_REWIND ? cut.slice(0, lastDash) : cut;
   }
 
   return s || 'untitled';

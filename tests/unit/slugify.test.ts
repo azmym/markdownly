@@ -76,4 +76,18 @@ describe('slugify', () => {
   it('handles mixed case with punctuation and numbers', () => {
     expect(slugify("React 18.2: What's New?")).toBe('react-18-2-what-s-new');
   });
+
+  it('does not rewind to a single-character slug when leading word is short', () => {
+    // Input: 'a-' + 'b' repeated 200 times. Without the MIN_REWIND floor, the
+    // rewind would land at the dash at index 1 and produce just 'a'.
+    const result = slugify('a-' + 'b'.repeat(200));
+    expect(result.length).toBe(80);
+    expect(result).toBe('a-' + 'b'.repeat(78));
+  });
+
+  it('still rewinds when the rewind produces a slug of at least MIN_REWIND chars', () => {
+    // 25-char first word, then a dash, then more.
+    const result = slugify('w'.repeat(25) + ' ' + 'x'.repeat(100));
+    expect(result).toBe('w'.repeat(25));
+  });
 });
