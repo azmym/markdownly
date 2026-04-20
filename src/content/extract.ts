@@ -3,7 +3,16 @@ import { preprocess } from './preprocess';
 import { htmlToMarkdown } from '../shared/turndown-config';
 import type { ExtractionResult } from '../shared/types';
 
-function run(): ExtractionResult {
+/**
+ * Runs in the tab's isolated world when the background service worker
+ * invokes it via chrome.scripting.executeScript({ func: runExtract }).
+ * Returns a structured-cloneable ExtractionResult back to the SW.
+ *
+ * The function is self-contained at build time: Vite/crxjs inlines
+ * Readability, preprocess, and htmlToMarkdown when emitting the
+ * background bundle that references this symbol.
+ */
+export function runExtract(): ExtractionResult {
   try {
     const clone = document.cloneNode(true) as Document;
     preprocess(clone.documentElement);
@@ -24,12 +33,3 @@ function run(): ExtractionResult {
     return { kind: 'error', message };
   }
 }
-
-// Executes immediately when injected via chrome.scripting.executeScript({ files }).
-// The last expression is the InjectionResult.result (structured-cloneable).
-// Assigning to a variable avoids tree-shaking; leaving it as the trailing
-// expression makes it the script's return value.
-const __pageToMarkdownResult = run();
-(globalThis as unknown as { __pageToMarkdownResult: ExtractionResult }).__pageToMarkdownResult =
-  __pageToMarkdownResult;
-__pageToMarkdownResult;
