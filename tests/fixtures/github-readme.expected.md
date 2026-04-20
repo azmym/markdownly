@@ -17,5 +17,5 @@ run({ verbose: true });
 
 ## TODO
 
--   \- \[x\] ship
--   \- \[ \] write docs
+-   [x]  ship
+-   [ ]  write docs
