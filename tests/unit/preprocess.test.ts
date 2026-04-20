@@ -37,7 +37,7 @@ describe('preprocess', () => {
       <script>evil()</script>
       <style>.x{}</style>
       <noscript>fallback</noscript>
-      <iframe src="https://x"></iframe>
+      <iframe src="about:blank"></iframe>
     `;
     preprocess(document.body);
     expect(document.body.querySelector('script')).toBeNull();
