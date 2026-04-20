@@ -28,7 +28,7 @@ describe('buildFilename', () => {
   });
 
   it('zero-pads single-digit months and days', () => {
-    // Jan 5 — confirm zero-padding
+    // Jan 5: confirm zero-padding
     vi.setSystemTime(new Date(2026, 0, 5, 9, 0, 0));
     expect(buildFilename('hello')).toBe('hello-2026-01-05.md');
   });
