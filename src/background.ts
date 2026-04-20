@@ -3,6 +3,13 @@ import { buildFilename } from './shared/filename';
 import { markdownToDataUrl } from './shared/data-url';
 import type { ExtractionResult } from './shared/types';
 
+class WatchdogTimeoutError extends Error {
+  constructor() {
+    super('watchdog timeout');
+    this.name = 'WatchdogTimeoutError';
+  }
+}
+
 const RESTRICTED_PREFIXES = [
   'chrome://',
   'edge://',
@@ -46,7 +53,7 @@ async function notify(title: string, message: string): Promise<void> {
 async function withWatchdog<T>(p: Promise<T>, ms: number): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new Error('__p2m_timeout__')), ms);
+    timeoutId = setTimeout(() => reject(new WatchdogTimeoutError()), ms);
   });
   try {
     return await Promise.race([p, timeout]);
@@ -77,8 +84,7 @@ async function handle(tab: chrome.tabs.Tab): Promise<void> {
     }
     result = first.result as ExtractionResult;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    if (msg === '__p2m_timeout__') {
+    if (err instanceof WatchdogTimeoutError) {
       await notify('Page to Markdown', 'Page took too long to convert.');
     } else {
       await notify('Page to Markdown', 'Conversion failed. Try reloading the page.');
