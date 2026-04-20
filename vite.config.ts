@@ -7,7 +7,16 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: { input: { background: 'src/background.ts' } }
+    rollupOptions: {
+      input: {
+        background: 'src/background.ts',
+        content: 'src/content/content-script.ts',
+      },
+      output: {
+        entryFileNames: (chunk) =>
+          chunk.name === 'content' ? 'content.js' : 'assets/[name]-[hash].js',
+      },
+    },
   },
   test: {
     environment: 'happy-dom',

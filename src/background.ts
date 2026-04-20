@@ -1,4 +1,3 @@
-import { runExtract } from './content/extract';
 import { buildFilename } from './shared/filename';
 import { markdownToDataUrl } from './shared/data-url';
 import type { ExtractionResult } from './shared/types';
@@ -70,14 +69,26 @@ async function handle(tab: chrome.tabs.Tab): Promise<void> {
 
   let result: ExtractionResult;
   try {
-    const injection = await withWatchdog(
+    // Two calls: first loads the bundled content script (which runs
+    // extraction and stashes the result on globalThis in the isolated
+    // world), second reads the stashed result back as the InjectionResult.
+    // We cannot use {func} for extraction because Function.prototype
+    // .toString() drops the module closure, so imports like Readability
+    // are undefined in the target context.
+    await withWatchdog(
       chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: runExtract,
+        files: ['content.js'],
       }),
       WATCHDOG_MS,
     );
-    const first = injection?.[0];
+    const readback = await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: () =>
+        (globalThis as unknown as { __pageToMarkdownResult?: ExtractionResult })
+          .__pageToMarkdownResult,
+    });
+    const first = readback?.[0];
     if (!first || first.result === undefined) {
       await notify('Page to Markdown', 'Conversion failed. Try reloading the page.');
       return;
