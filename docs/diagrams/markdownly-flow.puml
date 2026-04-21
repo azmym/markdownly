@@ -1,0 +1,40 @@
+@startuml
+skinparam sequenceMessageAlign center
+skinparam maxMessageSize 150
+
+actor User
+participant "Toolbar" as UI
+participant "Background SW" as SW
+participant "Content Script\n(isolated world)" as CS
+participant "Downloads" as DL
+
+User -> UI : click icon
+UI -> SW : action.onClicked(tab)
+
+alt restricted URL
+  SW -> User : notify "Can't convert"
+else URL allowed
+  SW -> CS : executeScript(files: content.js)
+  note right of CS
+    clone DOM
+    preprocess
+    Readability
+    Turndown -> md
+    stash result
+  end note
+  SW -> CS : executeScript(func: readResult)
+  CS --> SW : ExtractionResult
+
+  alt kind = empty
+    SW -> User : notify "No article"
+  else kind = error
+    SW -> User : notify "Conversion failed"
+  else watchdog timeout
+    SW -> User : notify "Too slow"
+  else kind = ok
+    SW -> SW : buildFilename + dataUrl
+    SW -> DL : downloads.download
+    DL -> User : file in Downloads
+  end
+end
+@enduml

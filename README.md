@@ -2,94 +2,124 @@
 
 Save any webpage as a Markdown file.
 
-A Chrome + Firefox extension (MV3) that saves the current webpage as a Markdown `.md` file with one click.
+Markdownly is a Chrome and Firefox extension (Manifest V3) that converts the current webpage to a GitHub-Flavored Markdown file with one toolbar click. It is aimed at people who read on the web and write in Markdown: researchers, engineers, note-takers, and anyone who prefers plain text over clipped HTML.
+
+The extension runs entirely in the browser. It does not talk to any server, does not ship remote code, does not read a page until you click the icon, and does not persist anything between clicks. The file you get is a plain `.md` you own.
 
 ## Features
 
-- Toolbar icon converts the active tab to Markdown; file lands in your Downloads folder.
-- Readability-based main-content extraction (strips nav, ads, sidebars, footers).
-- GitHub-Flavored Markdown: ATX headings, fenced code blocks with language hints, GFM tables, strikethrough, task lists, inlined links.
-- Images kept as remote `![alt](url)` references; no embedding, no local copies.
-- Filename: `<slug>-YYYY-MM-DD.md`, using the local date.
-- Single manifest, works on Chrome and Firefox 121+.
-- No backend, no telemetry, no permissions beyond the active tab.
+- One-click toolbar action: click the icon, the current page is saved to your Downloads folder as a `.md` file.
+- Main-content extraction via `@mozilla/readability`: navigation, ads, sidebars, footers, and `<script>` / `<style>` / `<noscript>` / `<iframe>` elements are dropped before conversion.
+- GitHub-Flavored Markdown output via `turndown` and `turndown-plugin-gfm`: ATX headings, fenced code blocks with language hints (from `language-*`, `lang-*`, or `hljs-*` class names), tables, strikethrough, task lists, and inlined links.
+- Lazy-loaded images are recovered by promoting `data-src`, `data-original`, and the first entry of `data-srcset` to `src` before extraction.
+- Filename pattern: `<slugified-title>-YYYY-MM-DD.md`, using the local date. Slugs are NFKD-normalized, stripped of diacritics and emoji, collapsed to ASCII, and guarded against Windows-reserved names.
+- Single codebase and single `manifest.json` for Chrome MV3 and Firefox 121+.
+- No backend, no telemetry, no analytics, no remote code.
+- Four permissions total: `activeTab`, `scripting`, `downloads`, `notifications`. No `host_permissions`.
 
-## Install for development
+## Installation
+
+Markdownly is not yet on the Chrome Web Store or Add-ons for Firefox. Install it from source as an unpacked developer build.
+
+### Build from source
 
 ```
+git clone https://github.com/azmym/markdownly.git
+cd markdownly
 npm install
 npm run build
 ```
 
-### Chrome / Edge
+The build writes the production bundle to `dist/`.
 
-1. Open `chrome://extensions` and enable Developer mode.
-2. Click "Load unpacked" and select the `dist/` directory.
-3. Pin the "Page to Markdown" extension to your toolbar.
+### Chrome, Edge, Brave, and other Chromium browsers
 
-### Firefox (121 or newer)
+1. Open `chrome://extensions`.
+2. Toggle "Developer mode" on (top right).
+3. Click "Load unpacked" and select the `dist/` directory.
+4. Pin "Markdownly" to your toolbar.
 
-1. Open `about:debugging` → "This Firefox" → "Load Temporary Add-on".
-2. Select `dist/manifest.json`.
+### Firefox (version 121 or newer)
 
-Temporary add-ons are unloaded when Firefox closes. For persistent installation, package a signed build with `web-ext sign` and install as an unsigned XPI in developer builds, or submit to AMO.
+1. Open `about:debugging#/runtime/this-firefox`.
+2. Click "Load Temporary Add-on".
+3. Select `dist/manifest.json`.
+
+Firefox unloads temporary add-ons when the browser closes. For a persistent install, package a signed build and distribute it as an XPI.
+
+## Usage
+
+1. Open any article page in a regular tab.
+2. Click the Markdownly icon in the toolbar.
+3. A `.md` file appears in your Downloads folder, named `<slugified-title>-YYYY-MM-DD.md`.
+
+The extension uses `conflictAction: 'uniquify'`, so clicking twice on the same page in the same day produces a second file with ` (1)` appended. The Markdown file starts at the article body; the page title is preserved in the filename rather than written as an H1, so you can prepend your own front matter without conflict.
+
+A typical filename looks like:
+
+```
+getting-started-with-rust-2026-04-20.md
+```
+
+Failure cases surface as desktop notifications and do not write a file:
+
+- "This page type can't be converted." for `chrome://`, `edge://`, `about:`, `file://`, `chrome-extension://`, `moz-extension://`, and the Chrome Web Store / AMO listing pages.
+- "Couldn't find an article on this page." when Readability cannot identify an article (common on single-page apps).
+- "Page took too long to convert." if extraction exceeds the 30-second watchdog.
+- "Conversion failed. Try reloading the page." for script-injection errors.
 
 ## Scripts
 
-- `npm run build`: Vite + crxjs build for both browsers, emits `dist/`.
-- `npm test`: run the Vitest unit suite (36 tests).
-- `npm run test:watch`: unit tests in watch mode.
-- `npm run test:e2e`: Playwright smoke (currently skipped; see Testing below).
-- `npm run lint:manifest`: `web-ext lint` on the built output.
+Pulled from `package.json`:
 
-## Testing
+| Script | Description |
+| --- | --- |
+| `npm run dev` | Start Vite in dev mode. |
+| `npm run build` | Build the production bundle to `dist/`. |
+| `npm test` | Run the Vitest unit suite once. |
+| `npm run test:watch` | Run Vitest in watch mode. |
+| `npm run test:e2e` | Run the Playwright end-to-end suite. |
+| `npm run lint:manifest` | Run `web-ext lint` on the built `dist/` directory. |
 
-### Unit tests (Vitest)
+## Project structure
 
-36 tests across 5 files cover the pure logic and the HTML→Markdown pipeline:
+```
+markdownly/
+├── manifest.json            MV3 manifest (shared by Chrome and Firefox)
+├── package.json
+├── vite.config.ts
+├── playwright.config.ts
+├── tsconfig.json
+├── public/
+│   └── icons/               16, 32, 48, 128 px PNGs
+├── src/
+│   ├── background.ts        service worker: click handler, injection, download
+│   ├── content/             extractor injected into the active tab
+│   └── shared/              slugify, filename, data-url, turndown-config, types
+├── tests/
+│   ├── unit/                Vitest suites and fixtures
+│   └── e2e/                 Playwright scaffold
+└── docs/                    architecture, development, testing, FAQ
+```
 
-- `slugify.test.ts`: 18 cases: ASCII, NFKD accents, emoji stripping, Windows-reserved names, truncation, etc.
-- `filename.test.ts`: 7 cases: slug+date composition, local-date vs UTC, zero-padding.
-- `data-url.test.ts`: 4 cases: UTF-8 round-trip, 1 MB stress.
-- `convert.test.ts`: 3 fixture-driven cases: semantic blog, GitHub-style README with fenced code + GFM task-lists, GFM tables.
-- `preprocess.test.ts`: 4 cases: lazy-image promotion, no-overwrite, non-content strip, end-to-end fixture.
+## Documentation
 
-Run with `npm test`.
+Detailed docs live under `docs/`:
 
-### Playwright e2e (deferred)
-
-`tests/e2e/smoke.spec.ts` is a scaffold that builds and loads the extension in Chromium and verifies a toolbar click produces a `.md` download. It is currently marked `test.skip` because dispatching the toolbar-icon click from Playwright requires a private Chromium debug API (`chrome.action.onClicked.dispatch`) that is not reliably available in current Playwright + Chromium combinations. Use the manual smoke procedure below until that harness is viable.
-
-### Manual smoke procedure
-
-1. `npm run build`.
-2. Load `dist/` as an unpacked extension in Chrome (see above) or as a temporary add-on in Firefox.
-3. Open a standard article page (try https://en.wikipedia.org/wiki/Markdown or any blog post) and click the toolbar icon. A `.md` file should appear in your Downloads folder, named after the page title.
-4. Verify the following edge cases:
-   - `chrome://newtab` (or `about:blank`) → notification "This page type can't be converted"; no download.
-   - A single-page app with no server-rendered article (e.g., https://x.com) → notification "Couldn't find an article on this page"; no download.
-   - Click the toolbar twice on the same article in the same day → second file appears with ` (1)` appended.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): service worker flow, content-script injection model, data-URL download path.
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md): local setup, build pipeline, debugging tips for both browsers.
+- [`docs/TESTING.md`](docs/TESTING.md): Vitest unit suite, fixture layout, Playwright end-to-end scaffold.
+- [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md): full list of sites and page shapes that do not convert cleanly.
+- [`docs/FAQ.md`](docs/FAQ.md): common questions about permissions, privacy, filenames, and output format.
 
 ## Known limitations
 
-- Single-page apps that render content entirely client-side (Twitter/X, LinkedIn, Notion, Google Docs) often have no detectable article; the extension shows "Couldn't find an article on this page."
-- Lazy-loaded images below the fold may save as their placeholder URL if the site hasn't hydrated them before you click.
-- `chrome://`, `edge://`, `about:`, `file://`, and Chrome Web Store / AMO pages are blocked for safety; they cannot be converted.
-- Pages with a consecutive image gallery render as a single paragraph of space-separated `![](...)` references, because that is what Turndown emits for adjacent `<img>` siblings.
+Single-page apps that render their main content entirely on the client typically return no detectable article: Gmail, Twitter/X, LinkedIn, Notion, Google Docs, and most web apps produce the "Couldn't find an article on this page" notification. Images below the fold may save as placeholder URLs if the host page has not hydrated them before conversion. Browser-internal and store pages are blocked by design. See [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) for the full list.
 
-## Architecture
+## Contributing
 
-- **`src/background.ts`**: MV3 service worker. Listens on `chrome.action.onClicked`, guards restricted URLs, injects the extractor via `chrome.scripting.executeScript({ func: runExtract })`, wraps injection in a 30-second watchdog, composes filename + `data:text/markdown;base64,...` URL, calls `chrome.downloads.download`. Surfaces every failure mode as a `chrome.notifications` toast.
-- **`src/content/extract.ts`**: exported `runExtract()`, serialized into the tab's isolated world by `executeScript({ func })`. Clones the document, runs `preprocess`, then Readability, then `htmlToMarkdown`. Returns a typed `ExtractionResult`.
-- **`src/content/preprocess.ts`**: pre-Readability DOM pass: promote `data-src`/`data-original`/`data-srcset` to `src`, strip `<script>`/`<style>`/`<noscript>`/`<iframe>`. Mutates the cloned subtree in place.
-- **`src/shared/slugify.ts`**: title → filesystem-safe basename. NFKD, emoji strip, non-alnum collapse, Windows-reserved prefix, dash-rewind truncation with `MIN_REWIND` floor.
-- **`src/shared/filename.ts`**: `slugify(title) + "-YYYY-MM-DD.md"` using local date arithmetic (no ICU dependency).
-- **`src/shared/data-url.ts`**: UTF-8 safe `markdownToDataUrl` with chunked base64 for large inputs.
-- **`src/shared/turndown-config.ts`**: Turndown with GFM + custom `fencedCodeBlock` rule (language hints from `class="language-*"`, `class="lang-*"`, or `class="hljs-*"`).
-- **`manifest.json`**: single manifest; `browser_specific_settings.gecko` block is ignored by Chrome, read by Firefox.
-
-See `docs/superpowers/specs/2026-04-20-page-to-markdown-design.md` for the full design spec and `docs/superpowers/plans/2026-04-20-page-to-markdown.md` for the implementation plan.
+Issues and pull requests are welcome at [github.com/azmym/markdownly](https://github.com/azmym/markdownly). Please open an issue before starting larger changes so design direction can be agreed up front. Pull requests should include unit tests for new logic and keep `npm test` and `npm run lint:manifest` passing. See [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) for the local dev loop.
 
 ## License
 
-MIT (see `LICENSE`).
+Markdownly is released under the MIT License. See [`LICENSE`](LICENSE) for the full text.
