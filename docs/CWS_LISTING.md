@@ -34,7 +34,7 @@ Known limitations
 Single-page apps that render content entirely client-side (Gmail, Twitter, Notion, Google Docs) often have no detectable article; the extension will show "Couldn't find an article on this page." See the docs on GitHub for the full list.
 ```
 
-**Category**: `Productivity`
+**Category**: `Productivity > Tools` (the Productivity header is a group label; pick the Tools subcategory)
 
 **Language**: `English`
 
