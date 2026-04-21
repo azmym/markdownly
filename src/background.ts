@@ -63,7 +63,7 @@ async function withWatchdog<T>(p: Promise<T>, ms: number): Promise<T> {
 
 async function handle(tab: chrome.tabs.Tab): Promise<void> {
   if (!tab.id || isRestricted(tab.url)) {
-    await notify('Page to Markdown', "This page type can't be converted.");
+    await notify('Markdownly', "This page type can't be converted.");
     return;
   }
 
@@ -90,25 +90,25 @@ async function handle(tab: chrome.tabs.Tab): Promise<void> {
     });
     const first = readback?.[0];
     if (!first || first.result === undefined) {
-      await notify('Page to Markdown', 'Conversion failed. Try reloading the page.');
+      await notify('Markdownly', 'Conversion failed. Try reloading the page.');
       return;
     }
     result = first.result as ExtractionResult;
   } catch (err) {
     if (err instanceof WatchdogTimeoutError) {
-      await notify('Page to Markdown', 'Page took too long to convert.');
+      await notify('Markdownly', 'Page took too long to convert.');
     } else {
-      await notify('Page to Markdown', 'Conversion failed. Try reloading the page.');
+      await notify('Markdownly', 'Conversion failed. Try reloading the page.');
     }
     return;
   }
 
   if (result.kind === 'empty') {
-    await notify('Page to Markdown', "Couldn't find an article on this page.");
+    await notify('Markdownly', "Couldn't find an article on this page.");
     return;
   }
   if (result.kind === 'error') {
-    await notify('Page to Markdown', 'Conversion failed.');
+    await notify('Markdownly', 'Conversion failed.');
     return;
   }
 
@@ -124,7 +124,7 @@ async function handle(tab: chrome.tabs.Tab): Promise<void> {
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    await notify('Page to Markdown', msg.slice(0, 120));
+    await notify('Markdownly', msg.slice(0, 120));
   }
 }
 
@@ -133,6 +133,6 @@ chrome.action.onClicked.addListener((tab) => {
   // so we do not await here; unhandled errors bubble to a top-level notify.
   handle(tab).catch(async (err) => {
     const msg = err instanceof Error ? err.message : String(err);
-    await notify('Page to Markdown', `Unexpected error: ${msg.slice(0, 100)}`);
+    await notify('Markdownly', `Unexpected error: ${msg.slice(0, 100)}`);
   });
 });

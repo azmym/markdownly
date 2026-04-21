@@ -1,10 +1,10 @@
 {
   "manifest_version": 3,
-  "name": "Page to Markdown",
+  "name": "Markdownly",
   "version": "0.1.0",
   "description": "Convert the current webpage to a Markdown (.md) file.",
   "action": {
-    "default_title": "Save page as Markdown",
+    "default_title": "Markdownly: save page as Markdown",
     "default_icon": {
       "16": "icons/16.png",
       "32": "icons/32.png"
@@ -20,7 +20,7 @@
   },
   "browser_specific_settings": {
     "gecko": {
-      "id": "page-to-markdown@local",
+      "id": "markdownly@local",
       "strict_min_version": "121.0"
     }
   }

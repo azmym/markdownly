@@ -1,4 +1,6 @@
-# Page to Markdown
+# Markdownly
+
+Save any webpage as a Markdown file.
 
 A Chrome + Firefox extension (MV3) that saves the current webpage as a Markdown `.md` file with one click.
 
