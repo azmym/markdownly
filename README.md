@@ -7,10 +7,10 @@
 <em>Save any webpage as a Markdown file. One click. No backend.</em>
 
 <p>
+  <a href="https://chromewebstore.google.com/detail/ocloehmdbpjeagkoblepofohoffeaddf"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-install-1e40af?logo=googlechrome&logoColor=white"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green"></a>
   <a href="https://github.com/azmym/markdownly/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/azmym/markdownly/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Manifest V3" src="https://img.shields.io/badge/manifest-v3-blue">
-  <img alt="Chrome supported" src="https://img.shields.io/badge/chrome-supported-1e40af">
   <img alt="Firefox 121+" src="https://img.shields.io/badge/firefox-121%2B-orange">
   <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6">
 </p>
@@ -68,7 +68,20 @@ Screenshots land in the next release. In the meantime, the sequence diagram in [
 
 ## Installation
 
-Markdownly is not yet published to the Chrome Web Store or Add-ons for Firefox. Install it from source as an unpacked developer build.
+### From the Chrome Web Store (recommended)
+
+<a href="https://chromewebstore.google.com/detail/ocloehmdbpjeagkoblepofohoffeaddf">
+  <img alt="Available in the Chrome Web Store" src="https://img.shields.io/badge/Add%20to%20Chrome-Install%20Markdownly-1e40af?style=for-the-badge&logo=googlechrome&logoColor=white">
+</a>
+
+1. Open the listing: [Markdownly on the Chrome Web Store](https://chromewebstore.google.com/detail/ocloehmdbpjeagkoblepofohoffeaddf).
+2. Click **Add to Chrome**, then **Add extension** in the confirmation dialog.
+3. Pin Markdownly to your toolbar: click the puzzle-piece icon in Chrome and hit the pin next to "Markdownly".
+4. Click the toolbar icon on any article page. A `.md` file lands in your Downloads folder.
+
+Works in any Chromium-based browser that supports the Chrome Web Store: Chrome, Edge, Brave, Arc, Vivaldi, Opera.
+
+If Markdownly helps you, a quick [star review on the Chrome Web Store](https://chromewebstore.google.com/detail/ocloehmdbpjeagkoblepofohoffeaddf/reviews) goes a long way.
 
 ### From source (Chrome, Edge, Brave)
 
